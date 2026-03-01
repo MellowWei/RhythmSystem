@@ -14,6 +14,7 @@
             display: flex; height: 100vh; overflow: hidden; 
         }
 
+        /* 侧边栏布局 */
         #s { 
             width: 500px; border-right: 1px solid var(--dim); 
             display: flex; flex-direction: column; background: #000; 
@@ -34,6 +35,7 @@
         #stage { flex: 1; position: relative; background: #000; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
 
+        /* 卡片样式 */
         .card { border: 1px solid var(--dim); background: #080808; padding: 20px; margin-bottom: 20px; border-left: 3px solid var(--n); font-size: 14px; }
         .m-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 15px 0; }
         .m-box { background: #0c0c0c; padding: 10px; border: 1px solid #222; text-align: center;}
@@ -41,17 +43,33 @@
         .section { margin-top: 10px; padding: 10px; line-height: 1.6; }
         .sci { color: #888; font-style: italic; background: rgba(0,255,204,0.03); }
         .con { color: var(--w); background: rgba(255,204,0,0.1); border: 1px solid var(--g); }
-
-        /* 触发式倒计时样式 */
         .card-timer { margin-top: 15px; font-family: monospace; color: var(--g); font-size: 11px; letter-spacing: 1px; border-top: 1px ridge var(--dim); padding-top: 10px; }
+
+        /* 左下角指南浮窗 */
+        #guide-wrap { position: fixed; left: 20px; bottom: 20px; z-index: 999; }
+        #guide-btn { 
+            width: 45px; height: 45px; background: #000; border: 1px solid var(--n); color: var(--n);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-weight: bold; font-size: 20px; transition: 0.3s;
+        }
+        #guide-btn:hover { background: var(--n); color: #000; box-shadow: 0 0 15px var(--n); }
+        #guide-content { 
+            position: absolute; bottom: 55px; left: 0; width: 320px; max-height: 70vh;
+            background: rgba(0,0,0,0.95); border: 1px solid var(--dim); border-left: 4px solid var(--g);
+            padding: 20px; color: var(--w); font-size: 13px; line-height: 1.6;
+            overflow-y: auto; display: none; backdrop-filter: blur(10px);
+        }
+        #guide-wrap:hover #guide-content { display: block; }
+        .g-tit { color: var(--g); font-weight: bold; margin: 12px 0 5px 0; border-bottom: 1px solid #333; }
+        .g-item { color: #aaa; margin-bottom: 8px; }
+        .g-item b { color: var(--n); font-family: monospace; }
 
         @media (max-width: 850px) {
             body { flex-direction: column; }
             #stage { height: 35vh; order: 1; flex: none; }
             #s { width: 100%; height: 65vh; border-right: none; border-top: 1px solid var(--dim); order: 2; }
-            .status-bar { padding: 15px; }
-            .res-display { font-size: 20px !important; }
-            #cmd-box { padding: 15px; }
+            #guide-wrap { bottom: 80px; left: 10px; }
+            #guide-content { width: 280px; bottom: 50px; }
         }
     </style>
 </head>
@@ -61,10 +79,39 @@
     <div id="s">
         <div class="status-bar">
             <div class="res-display" style="font-size: 28px; font-weight: 900; color: var(--w);">Rhythm System</div>
-            <div style="font-size:10px; color:var(--g); opacity:0.8;">V27.9 // 魏珏然专用因果全量引擎</div>
+            <div style="font-size:10px; color:var(--g); opacity:0.8;">V28.1 // 全量因果解析引擎</div>
         </div>
         <div id="log"></div>
-        <div id="cmd-box"><input id="cmd" placeholder="输入变量或年份(2026-2050)..." autofocus autocomplete="off"></div>
+        <div id="cmd-box"><input id="cmd" placeholder="输入变量、年份(2026-2050)执行宣告..." autofocus autocomplete="off"></div>
+    </div>
+
+    <div id="guide-wrap">
+        <div id="guide-content">
+            <div style="font-size: 16px; font-weight: bold; color: var(--n); margin-bottom: 10px;">因果宣告指南</div>
+            
+            <div class="g-tit">1. 秩序坍缩 (2027Y 节点)</div>
+            <div class="g-item">“世界会开战吗？” —— 观测能量暴力释放。</div>
+            <div class="g-item">“目前的稳定能持续多久？” —— 观测死寂状态。</div>
+            <div class="g-item">“美国大选的走向？” —— 观测相位偏移。</div>
+
+            <div class="g-tit">2. 重心位移 (2031 - 2032Y 节点)</div>
+            <div class="g-item">“未来的文明中心在哪？” —— 追踪潜意识位移。</div>
+            <div class="g-item">“中国的未来节律？” —— 了解搬家后的定论。</div>
+
+            <div class="g-tit">3. 个体重塑 (2028 - 2029Y 节点)</div>
+            <div class="g-item">“两口子还能凑合过吗？” —— 回归灵魂共振。</div>
+            <div class="g-item">“我该如何定义我的性别？” —— 频率标识化。</div>
+            <div class="g-item">“核心人物的意志重要吗？” —— 观测因果替代。</div>
+
+            <div class="g-tit">4. 认知覆灭 (2037 - 2038Y 节点)</div>
+            <div class="g-item">“现在的书还有价值吗？” —— 符号系统过载。</div>
+            <div class="g-item">“专家和科学还值得信吗？” —— 实证系统失效。</div>
+
+            <div class="g-tit">5. 最终归零 (2039 - 2050Y 节点)</div>
+            <div class="g-item">“权力的终点在哪里？” —— 制度合法性坍缩。</div>
+            <div class="g-item">“2050年以后是什么样？” —— 高维共振稳态。</div>
+        </div>
+        <div id="guide-btn">?</div>
     </div>
 
     <script>
@@ -87,6 +134,7 @@
             { pattern: /权力|政治|管理|体制|政府/, t: "2039.0Y", i: 95, l: 40, p: "刚装了个底 (25.4%)", sci: "制度合法性坍缩。", con: "权力像断电一样熄火。旧节奏转不动了。" }
         ];
 
+        // 触发式倒计时
         function startTimer(el) {
             const target = new Date('2027-10-20T00:00:00').getTime();
             function up() {
@@ -100,15 +148,23 @@
 
         function calc(input) {
             let res = RULES.find(r => r.pattern.test(input));
-            // 补充年份数字识别 (2026-2050)
+            
+            // 2026-2050 全时间轴解析引擎
             if (!res) {
                 const yMatch = input.match(/\d{4}/);
                 if (yMatch) {
                     const y = parseInt(yMatch[0]);
-                    if (y >= 2026 && y <= 2050) res = RULES.find(r => r.pattern.test(y.toString())) || RULES.find(r => r.t.includes(y.toString().substring(0,4)));
+                    if (y >= 2026 && y <= 2050) {
+                        // 寻找最接近的年份规则
+                        res = RULES.slice().sort((a, b) => {
+                            const ya = parseFloat(a.t), yb = parseFloat(b.t);
+                            return Math.abs(ya - y) - Math.abs(yb - y);
+                        })[0];
+                    }
                 }
             }
-            if (!res) res = { t: "2031.4Y", p: "重排中", i: 110, l: 45, sci: "全域因果重排中。", con: "旧逻辑无法解析。输入年份开启宣告。" };
+
+            if (!res) res = { t: "2031.4Y", p: "重排中", i: 110, l: 45, sci: "全域因果重排中。", con: "旧逻辑无法解析。输入年份或变量开启宣告。" };
 
             State.hz = res.i; State.lambda = res.l;
             const card = document.createElement('div');
@@ -135,6 +191,7 @@
         }
 
         cmd.onkeydown = (e) => { if (e.key === 'Enter' && cmd.value) { calc(cmd.value); cmd.value = ''; } };
+        window.onresize = render;
         render();
     </script>
 </body>
