@@ -38,17 +38,16 @@
         .m-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 15px 0; }
         .m-box { background: #0c0c0c; padding: 10px; border: 1px solid #222; text-align: center;}
         .m-val { font-size: 16px; color: var(--w); font-weight: bold; }
-        
-        /* 动态倒计时样式 */
-        .card-timer { font-family: monospace; color: var(--g); font-size: 11px; margin-top: 10px; letter-spacing: 1px; }
-
         .section { margin-top: 10px; padding: 10px; line-height: 1.6; }
         .sci { color: #888; font-style: italic; background: rgba(0,255,204,0.03); }
         .con { color: var(--w); background: rgba(255,204,0,0.1); border: 1px solid var(--g); }
 
+        /* 触发式倒计时样式 */
+        .card-timer { margin-top: 15px; font-family: monospace; color: var(--g); font-size: 11px; letter-spacing: 1px; border-top: 1px ridge var(--dim); padding-top: 10px; }
+
         @media (max-width: 850px) {
-            body { flex-direction: column; } 
-            #stage { height: 35vh; order: 1; flex: none; } 
+            body { flex-direction: column; }
+            #stage { height: 35vh; order: 1; flex: none; }
             #s { width: 100%; height: 65vh; border-right: none; border-top: 1px solid var(--dim); order: 2; }
             .status-bar { padding: 15px; }
             .res-display { font-size: 20px !important; }
@@ -62,10 +61,10 @@
     <div id="s">
         <div class="status-bar">
             <div class="res-display" style="font-size: 28px; font-weight: 900; color: var(--w);">Rhythm System</div>
-            <div style="font-size:10px; color:var(--g); opacity:0.8;">V27.5 // 因果触发架构</div>
+            <div style="font-size:10px; color:var(--g); opacity:0.8;">V27.9 // 魏珏然专用因果全量引擎</div>
         </div>
         <div id="log"></div>
-        <div id="cmd-box"><input id="cmd" placeholder="输入变量，开启因果倒计时..." autofocus autocomplete="off"></div>
+        <div id="cmd-box"><input id="cmd" placeholder="输入变量或年份(2026-2050)..." autofocus autocomplete="off"></div>
     </div>
 
     <script>
@@ -73,62 +72,54 @@
         const cmd = document.getElementById('cmd'), log = document.getElementById('log');
         let State = { hz: 60, lambda: 20, t: 0 };
 
+        // 全量规则库集成
         const RULES = [
-            { pattern: /202[67]|战争|开战|冲突|稳定|和平/, t: "2027.8Y", i: 180, l: 70, p: "到嗓子眼了 (91.2%)", sci: "旧秩序压强达到物理临界值。", con: "2027年前后，旧能量不喷发出来系统就会自燃。" },
-            { pattern: /202[89]|2030|性别|身份|我是谁/, t: "2029.2Y", i: 145, l: 50, p: "快溢出来了 (88.2%)", sci: "身份属性与生物基础脱钩。", con: "肉体特征标签彻底失效，人只剩下频率的区别。" },
-            { pattern: /203[1-5]|中国|国内|重心|搬家/, t: "2031.4Y", i: 110, l: 45, p: "大半瓶了 (75.4%)", sci: "文明重心物理性位移加速期。", con: "重心已经在搬家了，2031年前是最后旧节奏。" },
-            { pattern: /203[6-9]|2040|语言|书|真理|专家/, t: "2038.2Y", i: 160, l: 65, p: "已经溢出 (78.5%)", sci: "认知模型遭受高维干涉扇击。", con: "现在的书和话全是废纸垃圾。专家说的真理会被一巴掌扇碎。" },
-            { pattern: /204[1-9]|2050|权力|归零/, t: "2050.0Y", i: 40, l: 15, p: "旧瓶已碎 (100%)", sci: "制度合法性坍缩，能量耗尽。", con: "权力像断电一样彻底熄火。2050年后规矩没人接茬。" }
+            { pattern: /战争|开战|打仗|导弹|蘑菇|冲突|暴力|热战/, t: "2027.3Y", i: 180, l: 70, p: "就剩个缝 (95.6%)", sci: "旧秩序压强达到物理临界值。", con: "2027年前后，旧能量不喷发出来系统就会自燃。" },
+            { pattern: /稳定|和平|平衡|现状|安全/, t: "2027.8Y", i: 180, l: 70, p: "到嗓子眼了 (91.2%)", sci: "压强积蓄已达上限。", con: "所谓的‘稳定’只是爆发前的死寂。2027年喷发是唯一出路。" },
+            { pattern: /美国|美方|USA|大选|华盛顿/, t: "2027.8Y", i: 145, l: 58, p: "到嗓子眼了 (91.2%)", sci: "频率相位偏移，引发震颤。", con: "武力往外溢，嗓子眼堵死了。2027年是最后的旧节奏。" },
+            { pattern: /家庭|婚姻|两口子|凑合|亲密/, t: "2028.5Y", i: 105, l: 60, p: "几乎全满 (92.4%)", sci: "亲密关系回归灵魂共振模型。", con: "两口子凑合的过法会大面积崩溃。关系的唯一标准是频率。" },
+            { pattern: /性别|男|女|变动|身份|我是谁/, t: "2029.2Y", i: 85, l: 42, p: "快溢出来了 (88.2%)", sci: "身份属性与生物基础脱钩。", con: "肉体特征标签失效。人只剩下频率的区别。" },
+            { pattern: /人物|领导|元首|统帅|核心|主席|总统/, t: "2029.5Y", i: 155, l: 30, p: "马上就满 (90.1%)", sci: "个体意志即将发生因果替代。", con: "周期惯性大过个人意志。2029年水满则溢，谁也拦不住。" },
+            { pattern: /中国|中方|国内|东方|大陆/, t: "2031.4Y", i: 110, l: 45, p: "大半瓶了 (75.4%)", sci: "文明重心物理性位移加速。", con: "重心搬家，2031年前是最后旧节奏。搬完才是新世界。" },
+            { pattern: /文化中心|文明中心|领导力|软实力/, t: "2032.6Y", i: 125, l: 40, p: "换水阶段 (80.1%)", sci: "集体潜意识迁移，旧图腾丧失。", con: "新的重力场会吸走所有流量。这不是宣传，是搬家。" },
+            { pattern: /语言|书|说话|沟通|表达|文字|废话/, t: "2037.5Y", i: 160, l: 62, p: "马上就满 (90.1%)", sci: "符号系统过载，因果链断裂。", con: "说话没人信。现在的书和话全是废纸垃圾。" },
+            { pattern: /专家|权威|真理|科学|教育|学校|知识/, t: "2038.2Y", i: 155, l: 65, p: "已经溢出点 (78.5%)", sci: "实证系统彻底失效。", con: "专家说的真理会被一巴掌扇碎。真理就是你直观看到的。" },
+            { pattern: /权力|政治|管理|体制|政府/, t: "2039.0Y", i: 95, l: 40, p: "刚装了个底 (25.4%)", sci: "制度合法性坍缩。", con: "权力像断电一样熄火。旧节奏转不动了。" }
         ];
 
-        // 倒计时核心：为特定卡片启动时钟
-        function startCardTimer(element) {
+        function startTimer(el) {
             const target = new Date('2027-10-20T00:00:00').getTime();
-            function update() {
-                const now = new Date().getTime();
-                const diff = target - now;
-                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const s = Math.floor((diff % (1000 * 60)) / 1000);
-                element.innerText = `⏳ 距离 2027.8Y 爆发还剩: ${d}D ${h}H ${m}M ${s}S`;
-                if (diff > 0) requestAnimationFrame(update);
+            function up() {
+                const diff = target - new Date().getTime();
+                const d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
+                el.innerText = `⏳ 距离 2027.8Y 爆发还剩: ${d}D ${h}H ${m}M ${s}S`;
+                if (diff > 0) requestAnimationFrame(up);
             }
-            update();
+            up();
         }
 
         function calc(input) {
             let res = RULES.find(r => r.pattern.test(input));
+            // 补充年份数字识别 (2026-2050)
             if (!res) {
-                const yearMatch = input.match(/\d{4}/);
-                if (yearMatch) {
-                    const y = parseInt(yearMatch[0]);
-                    if (y >= 2026 && y <= 2050) res = RULES.find(r => r.pattern.test(y.toString()));
+                const yMatch = input.match(/\d{4}/);
+                if (yMatch) {
+                    const y = parseInt(yMatch[0]);
+                    if (y >= 2026 && y <= 2050) res = RULES.find(r => r.pattern.test(y.toString())) || RULES.find(r => r.t.includes(y.toString().substring(0,4)));
                 }
             }
-            if (!res) res = { t: "---", p: "重排中", i: 110, l: 45, sci: "全域因果重排中。", con: "输入 2026-2050 之间的年份获取定论。" };
+            if (!res) res = { t: "2031.4Y", p: "重排中", i: 110, l: 45, sci: "全域因果重排中。", con: "旧逻辑无法解析。输入年份开启宣告。" };
 
             State.hz = res.i; State.lambda = res.l;
-            
             const card = document.createElement('div');
             card.className = 'card';
-            // 创建卡片结构，预留倒计时容器
-            card.innerHTML = `
-                <div style="color:var(--g); font-weight:bold;">宣告：${input}</div>
-                <div class="m-grid">
-                    <div class="m-box"><div class="m-val">${res.t}</div></div>
-                    <div class="m-box"><div class="m-val">${res.p}</div></div>
-                </div>
+            card.innerHTML = `<div style="color:var(--g); font-weight:bold;">宣告：${input}</div>
+                <div class="m-grid"><div class="m-box"><div class="m-val">${res.t}</div></div><div class="m-box"><div class="m-val">${res.p}</div></div></div>
                 <div class="section sci">${res.sci}</div>
                 <div class="section con">${res.con}</div>
-                <div class="card-timer">CALCULATING TIMELINE...</div>
-            `;
-            
+                <div class="card-timer">CALCULATING...</div>`;
             log.insertBefore(card, log.firstChild);
-            
-            // 在卡片输出的那一刻，激活内部的倒计时
-            const timerElement = card.querySelector('.card-timer');
-            startCardTimer(timerElement);
+            startTimer(card.querySelector('.card-timer'));
         }
 
         function render() {
