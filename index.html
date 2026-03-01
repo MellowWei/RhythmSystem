@@ -7,39 +7,20 @@
     <style>
         :root { --n: #00ffcc; --g: #ffcc00; --b: #050505; --w: #ffffff; --dim: #1a1a1a; --r: #ff3300; }
         * { box-sizing: border-box; }
+        body { background: var(--b); color: var(--n); font-family: "PingFang SC", "Microsoft YaHei", monospace; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        body { 
-            background: var(--b); color: var(--n); 
-            font-family: "PingFang SC", "Microsoft YaHei", monospace; margin: 0; 
-            display: flex; height: 100vh; overflow: hidden; 
-        }
-
-        /* 侧边控制台 */
-        #s { 
-            width: 450px; border-right: 1px solid var(--dim); 
-            display: flex; flex-direction: column; background: #000; 
-            z-index: 10; flex-shrink: 0; position: relative;
-        }
-
-        .status-bar { 
-            padding: 25px; background: rgba(0,0,0,0.9); 
-            border-bottom: 1px solid var(--dim); backdrop-filter: blur(10px); 
-        }
-
+        #s { width: 450px; border-right: 1px solid var(--dim); display: flex; flex-direction: column; background: #000; z-index: 10; flex-shrink: 0; position: relative; }
+        .status-bar { padding: 25px; background: rgba(0,0,0,0.9); border-bottom: 1px solid var(--dim); backdrop-filter: blur(10px); }
         #log { flex: 1; overflow-y: auto; padding: 25px; scrollbar-width: none; }
         #log::-webkit-scrollbar { display: none; }
-
         #cmd-box { padding: 25px; border-top: 1px solid var(--dim); background: #000; }
-        #cmd { background: #0a0a0a; border: 2px solid var(--n); color: var(--w); width: 100%; padding: 15px; outline: none; font-size: 16px; border-radius: 0; transition: border-color 0.3s; }
+        #cmd { background: #0a0a0a; border: 2px solid var(--n); color: var(--w); width: 100%; padding: 15px; outline: none; font-size: 16px; transition: border 0.3s; }
 
-        /* 波形画布 */
         #stage { flex: 1; position: relative; background: #000; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
 
-        /* 宣告卡片 */
-        .card { border: 1px solid var(--dim); background: #080808; padding: 20px; margin-bottom: 20px; border-left: 3px solid var(--n); font-size: 14px; animation: slideIn 0.3s ease-out; transition: border-left 0.5s; }
+        .card { border: 1px solid var(--dim); background: #080808; padding: 20px; margin-bottom: 20px; border-left: 3px solid var(--n); font-size: 14px; animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
         .m-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 15px 0; }
         .m-box { background: #0c0c0c; padding: 10px; border: 1px solid #222; text-align: center;}
         .m-val { font-size: 16px; color: var(--w); font-weight: bold; }
@@ -47,15 +28,15 @@
         .sci { color: #888; font-style: italic; background: rgba(0,255,204,0.03); }
         .con { color: var(--w); background: rgba(255,204,0,0.1); border: 1px solid var(--g); }
         
+        /* 关联频率样式 */
+        .trace { margin-top: 12px; padding: 8px; background: rgba(255, 204, 0, 0.05); border: 1px dashed var(--g); color: var(--g); font-size: 12px; }
+        .trace-tag { font-weight: bold; background: var(--g); color: #000; padding: 1px 4px; margin-right: 5px; }
+
         .card-timer { margin-top: 15px; font-family: monospace; color: var(--g); font-size: 11px; letter-spacing: 1px; border-top: 1px ridge var(--dim); padding-top: 10px; }
 
-        /* 左下角指南浮窗 */
+        /* 左下角指南浮窗 - 强化版 */
         #guide-wrap { position: fixed; left: 20px; bottom: 20px; z-index: 999; }
-        #guide-btn { 
-            width: 45px; height: 45px; background: #000; border: 1px solid var(--n); color: var(--n);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-weight: bold; font-size: 20px; transition: 0.3s;
-        }
+        #guide-btn { width: 45px; height: 45px; background: #000; border: 1px solid var(--n); color: var(--n); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; font-size: 20px; transition: 0.3s; }
         #guide-btn:hover { background: var(--n); color: #000; box-shadow: 0 0 15px var(--n); }
         
         #guide-content { 
@@ -68,25 +49,18 @@
         .g-tit { color: var(--g); font-weight: bold; margin: 12px 0 5px 0; border-bottom: 1px solid #333; }
         .g-item { color: #aaa; margin-bottom: 8px; font-size: 12px; }
 
-        @media (max-width: 850px) {
-            body { flex-direction: column; }
-            #stage { height: 30vh; order: 1; flex: none; }
-            #s { width: 100%; height: 70vh; border-right: none; border-top: 1px solid var(--dim); order: 2; }
-            #guide-wrap { bottom: 90px; left: 15px; }
-            #guide-content { width: 280px; bottom: 50px; }
-        }
+        @media (max-width: 850px) { body { flex-direction: column; } #stage { height: 30vh; order: 1; flex: none; } #s { width: 100%; height: 70vh; order: 2; } #guide-wrap { bottom: 90px; left: 15px; } }
     </style>
 </head>
 <body>
     <div id="stage"><canvas id="c"></canvas></div>
-
     <div id="s">
         <div class="status-bar">
             <div style="font-size: 24px; font-weight: 900; color: var(--w);">Rhythm System</div>
-            <div style="font-size:10px; color:var(--g); opacity:0.8; letter-spacing: 2px;">V29.8 // 节律-世界系统宣告</div>
+            <div style="font-size:10px; color:var(--g); opacity:0.8; letter-spacing: 2px;">V31.5 // WEI JUERAN // FULL CAUSALITY</div>
         </div>
         <div id="log"></div>
-        <div id="cmd-box"><input id="cmd" placeholder="输入变量、年份(2026-2050)执行宣告..." autofocus autocomplete="off"></div>
+        <div id="cmd-box"><input id="cmd" placeholder="输入变量、年份执行宣告..." autofocus autocomplete="off"></div>
     </div>
 
     <div id="guide-wrap">
@@ -110,22 +84,22 @@
         const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
         const cmd = document.getElementById('cmd'), log = document.getElementById('log');
         let State = { hz: 60, lambda: 20, t: 0 };
-        // 视觉共振状态
         let Visual = { color: '#00ffcc', shadow: '#00ffcc', glitch: 0 };
 
-    const RULES = [
-            { pattern: /202[6-7]|战争|开战|打仗|导弹|蘑菇|冲突|暴力|热战/, t: "2027.3Y", i: 195, l: 85, p: "就剩个缝 (95.6%)", sci: "旧秩序压强达到物理临界值。", con: "2027年前后，旧能量不喷发出来系统就会自燃。" },
-            { pattern: /稳定|和平|平衡|现状|安全/, t: "2027.8Y", i: 180, l: 70, p: "到嗓子眼了 (91.2%)", sci: "压强积蓄已达上限。", con: "所谓的‘稳定’只是爆发前的死寂。" },
-            { pattern: /美国|美方|USA|大选|华盛顿/, t: "2027.8Y", i: 145, l: 58, p: "相位偏移 (91.2%)", sci: "频率相位偏移，引发震颤。", con: "武力往外溢，嗓子眼堵死了。" },
-            { pattern: /2028|家庭|婚姻|两口子|凑合|亲密/, t: "2028.5Y", i: 105, l: 60, p: "几乎全满 (92.4%)", sci: "亲密关系回归灵魂共振模型。", con: "两口子凑合的过法会大面积崩溃。" },
-            { pattern: /2029|2030|性别|男|女|变动|身份|我是谁/, t: "2029.2Y", i: 85, l: 42, p: "快溢出来了 (88.2%)", sci: "身份属性与生物基础脱钩。", con: "人只剩下频率的区别。" },
-            { pattern: /人物|领导|元首|统帅|核心|主席|总统/, t: "2029.5Y", i: 155, l: 30, p: "因果替代 (90.1%)", sci: "个体意志即将发生因果替代。", con: "周期惯性大过个人意志。" },
-            { pattern: /203[1-2]|中国|中方|国内|东方|大陆/, t: "2031.4Y", i: 110, l: 45, p: "大半瓶了 (75.4%)", sci: "文明重心物理性位移加速。", con: "重心搬家，2031年前是最后旧节奏。" },
-            { pattern: /文化中心|文明中心|领导力|软实力/, t: "2032.6Y", i: 125, l: 40, p: "换水阶段 (80.1%)", sci: "集体潜意识迁移，旧图腾丧失。", con: "新的重力场会吸走所有流量。" },
-            { pattern: /203[3-7]|语言|书|说话|沟通|表达|文字|废话/, t: "2037.5Y", i: 160, l: 62, p: "符号过载 (90.1%)", sci: "符号系统过载，因果链断裂。", con: "说话没人信。现在的书和话全是废纸垃圾。" },
-            { pattern: /2038|专家|权威|真理|科学|教育|学校|知识/, t: "2038.2Y", i: 155, l: 65, p: "溢出点 (78.5%)", sci: "实证系统彻底失效。", con: "专家说的真理会被一巴掌扇碎。" },
-            { pattern: /2039|204[0-9]|权力|政治|管理|体制|政府/, t: "2039.0Y", i: 95, l: 40, p: "刚装了个底 (25.4%)", sci: "制度合法性坍缩。", con: "权力像断电一样熄火。" },
-            { pattern: /2050|归零|终点|以后|未来世界/, t: "2050.0Y", i: 200, l: 20, p: "旧瓶已碎 (100%)", sci: "旧秩序彻底碎裂，进入高维共振稳态。", con: "2050年因果归零，进入纯粹频率时代。" }
+        // 完整同步截图规则 + 因果链
+       const RULES = [
+            { pattern: /202[6-7]|战争|开战|打仗|导弹|蘑菇|冲突|暴力|热战/, t: "2027.3Y", i: 195, l: 85, p: "就剩个缝 (95.6%)", sci: "旧秩序压强达到物理临界值。", con: "2027年前后，旧能量不喷发出来系统就会自燃。", trace: "触发 2039 权力坍缩的早期震颤。" },
+            { pattern: /稳定|和平|平衡|现状|安全/, t: "2027.8Y", i: 180, l: 70, p: "到嗓子眼了 (91.2%)", sci: "压强积蓄已达上限。", con: "所谓的‘稳定’只是爆发前的死寂。", trace: "波动指向 2031 文明重心的物理位移。" },
+            { pattern: /美国|美方|USA|大选|华盛顿/, t: "2027.8Y", i: 145, l: 58, p: "相位偏移 (91.2%)", sci: "频率相位偏移，引发震颤。", con: "武力往外溢，嗓子眼堵死了。", trace: "加速 2038 实证系统彻底失效。" },
+            { pattern: /2028|家庭|婚姻|两口子|凑合|亲密/, t: "2028.5Y", i: 105, l: 60, p: "几乎全满 (92.4%)", sci: "亲密关系回归灵魂共振模型。", con: "两口子凑合的过法会大面积崩溃。", trace: "预演 2029 个体身份标识化。" },
+            { pattern: /2029|2030|性别|男|女|变动|身份|我是谁/, t: "2029.2Y", i: 85, l: 42, p: "快溢出来了 (88.2%)", sci: "身份属性与生物基础脱钩。", con: "肉体特征标签失效。", trace: "为 2050 绝对稳态奠定认知基础。" },
+            { pattern: /人物|领导|元首|统帅|核心|主席|总统/, t: "2029.5Y", i: 155, l: 30, p: "因果替代 (90.1%)", sci: "个体意志即将发生因果替代。", con: "周期惯性大过个人意志。", trace: "导致 2039 管理体制合法性坍缩。" },
+            { pattern: /203[1-2]|中国|中方|国内|东方|大陆/, t: "2031.4Y", i: 110, l: 45, p: "大半瓶了 (75.4%)", sci: "文明重心物理性位移加速。", con: "重心搬家，2031年前是最后旧节奏。", trace: "开启 2032 文化图腾重排。" },
+            { pattern: /文化中心|文明中心|领导力|软实力/, t: "2032.6Y", i: 125, l: 40, p: "换水阶段 (80.1%)", sci: "集体潜意识迁移，旧图腾丧失。", con: "新的重力场会吸走所有流量。", trace: "预示 2037 语言符号系统过载。" },
+            { pattern: /203[3-7]|语言|书|说话|沟通|表达|文字|废话/, t: "2037.5Y", i: 160, l: 62, p: "符号过载 (90.1%)", sci: "符号系统过载，因果链断裂。", con: "说话没人信。", trace: "直接导致 2038 权威系统彻底熄火。" },
+            { pattern: /2038|专家|权威|真理|科学|教育|学校|知识/, t: "2038.2Y", i: 155, l: 65, p: "溢出点 (78.5%)", sci: "实证系统彻底失效。", con: "专家说的真理会被一巴掌扇碎。", trace: "终结旧时代逻辑，导向 2050 归零。" },
+            { pattern: /2039|204[0-9]|权力|政治|管理|体制|政府/, t: "2039.0Y", i: 95, l: 40, p: "刚装了个底 (25.4%)", sci: "制度合法性坍缩。", con: "权力像断电一样熄火。", trace: "旧秩序碎裂，进入最后的相位过渡。" },
+            { pattern: /2050|归零|终点|以后|未来世界/, t: "2050.0Y", i: 200, l: 20, p: "旧瓶已碎 (100%)", sci: "旧秩序彻底碎裂，进入高维共振稳态。", con: "2050年因果归零，进入纯粹频率时代。", trace: "因果链条闭环，所有震颤重归寂静。" }
         ];
 
         function getYDate(yStr) {
@@ -136,24 +110,15 @@
         function startTimer(el, targetTime, label) {
             function update() {
                 const diff = targetTime - new Date().getTime();
-                if (diff <= 0) {
-                    el.innerText = `⌛ ${label} 节点已激活`;
-                    el.style.color = "var(--n)";
-                    return;
-                }
-                const d = Math.floor(diff / 86400000);
-                const h = Math.floor((diff % 86400000) / 3600000);
-                const m = Math.floor((diff % 3600000) / 60000);
-                const s = Math.floor((diff % 60000) / 1000);
-                el.innerText = `⏳ 距离 ${label} 爆发还剩: ${d}D ${h}H ${m}M ${s}S`;
+                if (diff <= 0) { el.innerText = `⌛ ${label} 节点已激活`; return; }
+                const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+                el.innerText = `⏳ 距离爆发还剩: ${d}D ${h}H ${m}M ${s}S`;
                 requestAnimationFrame(update);
             }
             update();
         }
 
-        function toggleGuide() {
-            document.getElementById('guide-content').classList.toggle('active');
-        }
+        function toggleGuide() { document.getElementById('guide-content').classList.toggle('active'); }
 
         function calc(input) {
             let res = RULES.find(r => r.pattern.test(input));
@@ -161,37 +126,28 @@
                 const yMatch = input.match(/\d{4}/);
                 if (yMatch) {
                     const y = parseInt(yMatch[0]);
-                    res = RULES.slice().sort((a, b) => Math.abs(parseFloat(a.t) - y) - Math.abs(parseFloat(b.t) - y))[0];
+                    res = RULES.slice().sort((a,b) => Math.abs(parseFloat(a.t)-y)-Math.abs(parseFloat(b.t)-y))[0];
                 }
             }
+            if (!res) res = { t: "2031.4Y", p: "重排中", i: 110, l: 45, sci: "全域因果重排中。", con: "请宣告有效年份或关键字。", trace: "等待因果连锁激活。" };
 
-            if (!res) res = { t: "2031.4Y", p: "重排中", i: 110, l: 45, sci: "全域因果重排中。", con: "无法解析该频率。" };
-
-            // 视觉共振校准
             const targetY = parseFloat(res.t);
             if (targetY < 2028) { Visual.color = "#ff3300"; Visual.shadow = "#ff3300"; }
             else if (targetY >= 2045) { Visual.color = "#ffffff"; Visual.shadow = "#ffffff"; }
             else if (targetY >= 2037) { Visual.color = "#ffcc00"; Visual.shadow = "#ffcc00"; }
             else { Visual.color = "#00ffcc"; Visual.shadow = "#00ffcc"; }
             
-            Visual.glitch = 12; // 瞬时震颤
-            cmd.style.borderColor = Visual.color;
-
+            Visual.glitch = 10;
             State.hz = res.i; State.lambda = res.l;
 
             const card = document.createElement('div');
             card.className = 'card';
             card.style.borderLeftColor = Visual.color;
-            card.innerHTML = `
-                <div style="color:var(--g); font-weight:bold;">宣告：${input}</div>
-                <div class="m-grid">
-                    <div class="m-box"><div style="font-size:9px;opacity:0.6">目标节点</div><div class="m-val">${res.t}</div></div>
-                    <div class="m-box"><div style="font-size:9px;opacity:0.6">压强状态</div><div class="m-val">${res.p}</div></div>
-                </div>
-                <div class="section sci">${res.sci}</div>
-                <div class="section con">${res.con}</div>
-                <div class="card-timer">CALCULATING TIMELINE...</div>
-            `;
+            card.innerHTML = `<div style="color:var(--g);font-weight:bold;">宣告：${input}</div>
+                <div class="m-grid"><div class="m-box"><div style="font-size:9px;opacity:0.6">目标节点</div><div class="m-val">${res.t}</div></div><div class="m-box"><div style="font-size:9px;opacity:0.6">压强状态</div><div class="m-val">${res.p}</div></div></div>
+                <div class="section sci">${res.sci}</div><div class="section con">${res.con}</div>
+                <div class="trace"><span class="trace-tag">关联频率</span>${res.trace}</div>
+                <div class="card-timer">CALCULATING...</div>`;
             log.insertBefore(card, log.firstChild);
             startTimer(card.querySelector('.card-timer'), getYDate(res.t), res.t);
         }
@@ -199,12 +155,9 @@
         function render() {
             canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
             ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            
-            let g = Visual.glitch > 0 ? (Math.random() - 0.5) * Visual.glitch : 0;
+            let g = Visual.glitch > 0 ? (Math.random()-0.5)*Visual.glitch : 0;
             if(Visual.glitch > 0) Visual.glitch--;
-
-            ctx.strokeStyle = Visual.color; ctx.lineWidth = 2; 
-            ctx.shadowBlur = 15; ctx.shadowColor = Visual.shadow;
+            ctx.strokeStyle = Visual.color; ctx.lineWidth = 2; ctx.shadowBlur = 15; ctx.shadowColor = Visual.shadow;
             ctx.beginPath();
             const midY = canvas.height / 2;
             for (let x = 0; x <= canvas.width; x += 5) {
@@ -212,18 +165,15 @@
                 x === 0 ? ctx.moveTo(x + g, y) : ctx.lineTo(x + g, y);
             }
             ctx.stroke();
-
-            if (Visual.color === "#ffffff") { // 2050 稳态粒子效果
+            if (Visual.color === "#ffffff") {
                 ctx.fillStyle = "rgba(255,255,255,0.2)";
-                for(let i=0; i<6; i++) ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1, 1);
+                for(let i=0; i<5; i++) ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1, 1);
             }
-
             State.t += 0.05; requestAnimationFrame(render);
         }
 
         cmd.onkeydown = (e) => { if (e.key === 'Enter' && cmd.value) { calc(cmd.value); cmd.value = ''; } };
-        window.onresize = render;
-        render();
+        window.onresize = render; render();
     </script>
 </body>
 </html>
