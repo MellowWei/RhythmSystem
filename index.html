@@ -3,73 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rhythm System // 掌控者</title>
+    <title>Rhythm System</title>
     <style>
         :root { --n: #00ffcc; --g: #ffcc00; --b: #050505; --w: #ffffff; --dim: #1a1a1a; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; }
         
         body { 
             background: var(--b); color: var(--n); 
-            font-family: "PingFang SC", "Microsoft YaHei", monospace; 
-            margin: 0; display: flex; height: 100vh; overflow: hidden; 
+            font-family: "PingFang SC", monospace; margin: 0; 
+            display: flex; height: 100vh; overflow: hidden; 
         }
 
-        /* 布局重力场 */
         #s { 
-            width: 450px; max-width: 100%; border-right: 1px solid var(--dim); 
+            width: 500px; border-right: 1px solid var(--dim); 
             display: flex; flex-direction: column; background: #000; 
             z-index: 10; flex-shrink: 0; position: relative;
         }
 
         .status-bar { 
-            padding: 20px; background: rgba(0,0,0,0.9); 
+            padding: 25px; background: rgba(0,0,0,0.9); 
             border-bottom: 1px solid var(--dim); backdrop-filter: blur(10px); 
         }
 
-        #timer { 
-            font-size: 11px; color: var(--g); margin-top: 8px; 
-            font-family: monospace; letter-spacing: 1px; text-transform: uppercase;
-        }
-
-        #log { flex: 1; overflow-y: auto; padding: 20px; scrollbar-width: none; }
+        #log { flex: 1; overflow-y: auto; padding: 25px; scrollbar-width: none; }
         #log::-webkit-scrollbar { display: none; }
 
-        #cmd-box { padding: 20px; border-top: 1px solid var(--dim); background: #000; }
-        #cmd { 
-            background: #0a0a0a; border: 2px solid var(--n); color: var(--w); 
-            width: 100%; padding: 14px; outline: none; font-size: 16px; border-radius: 0;
-        }
+        #cmd-box { padding: 25px; border-top: 1px solid var(--dim); background: #000; }
+        #cmd { background: #0a0a0a; border: 2px solid var(--n); color: var(--w); width: 100%; padding: 15px; outline: none; font-size: 16px; }
 
         #stage { flex: 1; position: relative; background: #000; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
 
-        /* 卡片自适应 UI */
-        .card { 
-            border: 1px solid var(--dim); background: #080808; 
-            padding: 18px; margin-bottom: 20px; border-left: 3px solid var(--n); 
-        }
-        .m-grid { 
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; 
-        }
-        .m-box { 
-            background: #0c0c0c; padding: 15px; border: 1px solid #222; 
-            text-align: center; color: var(--w); font-weight: bold; font-size: 15px; 
-        }
-        .section { margin-top: 10px; padding: 12px; font-size: 13px; line-height: 1.6; }
-        .sci { color: #888; font-style: italic; background: rgba(0,255,204,0.03); border-bottom: 1px solid #111; }
-        .con { color: var(--w); background: rgba(255,204,0,0.05); border: 1px solid rgba(255,204,0,0.3); }
+        .card { border: 1px solid var(--dim); background: #080808; padding: 20px; margin-bottom: 20px; border-left: 3px solid var(--n); font-size: 14px; }
+        .m-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 15px 0; }
+        .m-box { background: #0c0c0c; padding: 10px; border: 1px solid #222; text-align: center;}
+        .m-val { font-size: 16px; color: var(--w); font-weight: bold; }
+        
+        /* 动态倒计时样式 */
+        .card-timer { font-family: monospace; color: var(--g); font-size: 11px; margin-top: 10px; letter-spacing: 1px; }
 
-        /* 移动端深度校准 */
+        .section { margin-top: 10px; padding: 10px; line-height: 1.6; }
+        .sci { color: #888; font-style: italic; background: rgba(0,255,204,0.03); }
+        .con { color: var(--w); background: rgba(255,204,0,0.1); border: 1px solid var(--g); }
+
         @media (max-width: 850px) {
-            body { flex-direction: column; }
-            #stage { height: 30vh; order: 1; flex: none; }
-            #s { 
-                width: 100%; height: 70vh; 
-                border-right: none; border-top: 1px solid var(--dim);
-                order: 2; 
-            }
+            body { flex-direction: column; } 
+            #stage { height: 35vh; order: 1; flex: none; } 
+            #s { width: 100%; height: 65vh; border-right: none; border-top: 1px solid var(--dim); order: 2; }
             .status-bar { padding: 15px; }
-            .m-box { padding: 10px; font-size: 13px; }
+            .res-display { font-size: 20px !important; }
+            #cmd-box { padding: 15px; }
         }
     </style>
 </head>
@@ -78,79 +61,76 @@
 
     <div id="s">
         <div class="status-bar">
-            <div style="font-size: 26px; font-weight: 900; color: var(--w); letter-spacing: -1px;">Rhythm System</div>
-            <div id="timer">DETECTING CAUSAL WAVES...</div>
+            <div class="res-display" style="font-size: 28px; font-weight: 900; color: var(--w);">Rhythm System</div>
+            <div style="font-size:10px; color:var(--g); opacity:0.8;">V27.5 // 因果触发架构</div>
         </div>
         <div id="log"></div>
-        <div id="cmd-box">
-            <input id="cmd" placeholder="输入年份 (2026-2050) 或 变量..." autofocus autocomplete="off">
-        </div>
+        <div id="cmd-box"><input id="cmd" placeholder="输入变量，开启因果倒计时..." autofocus autocomplete="off"></div>
     </div>
 
     <script>
         const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
-        const cmd = document.getElementById('cmd'), log = document.getElementById('log'), timer = document.getElementById('timer');
+        const cmd = document.getElementById('cmd'), log = document.getElementById('log');
         let State = { hz: 60, lambda: 20, t: 0 };
 
-        // 1. 倒计时引擎：锁定 2027.8Y (约 2027-10-20)
-        function updateTimer() {
-            const target = new Date('2027-10-20T00:00:00').getTime();
-            const now = new Date().getTime();
-            const diff = target - now;
-            if (diff <= 0) { timer.innerText = "SYSTEM RESET: 2027.8Y REACHED"; return; }
-            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const s = Math.floor((diff % (1000 * 60)) / 1000);
-            timer.innerText = `距离 2027.8Y 爆发点: ${d}D ${h}H ${m}M ${s}S`;
-        }
-        setInterval(updateTimer, 1000);
-
-        // 2. 因果规则库：全量机制找回
         const RULES = [
-            { pattern: /202[67]|战争|开战|打仗|导弹|冲突|稳定|和平|平衡/, t: "2027.8Y", i: 180, l: 70, p: "到嗓子眼了 (91.2%)", sci: "旧秩序压强达到物理临界值，能量必须释放。", con: "所谓的‘稳定’只是爆发前的死寂。2027年是个死循环。" },
-            { pattern: /202[89]|2030|性别|男|女|身份|变动|我是谁/, t: "2029.2Y", i: 145, l: 50, p: "快溢出来了 (88.2%)", sci: "身份属性与生物基础脱钩，转化为频率标识。", con: "肉体特征标签在2029年后彻底失效。人只剩下频率的区别。" },
-            { pattern: /203[1-5]|中国|中方|国内|东方|重心|搬家/, t: "2031.4Y", i: 110, l: 45, p: "大半瓶了 (75.4%)", sci: "文明重心的物理性位移进入加速期，重力场正在迁移。", con: "重心已经在搬家了，2031年前是最后旧节奏。" },
-            { pattern: /203[6-9]|2040|语言|书|说话|沟通|文字|真理|专家|科学/, t: "2038.2Y", i: 160, l: 65, p: "已经溢出 (78.5%)", sci: "认知模型遭受高维干涉扇击，信息熵增至临界点。", con: "现在的书和话全是废纸垃圾。专家说的真理会被一巴掌扇碎。" },
-            { pattern: /204[1-9]|2050|权力|政治|体制|政府|归零/, t: "2050.0Y", i: 40, l: 15, p: "旧瓶已碎 (100%)", sci: "现行制度的合法性基石因物理能量耗尽而坍缩。", con: "权力像断电一样彻底熄火。规矩没人接茬，旧节奏转不动了。" }
+            { pattern: /202[67]|战争|开战|冲突|稳定|和平/, t: "2027.8Y", i: 180, l: 70, p: "到嗓子眼了 (91.2%)", sci: "旧秩序压强达到物理临界值。", con: "2027年前后，旧能量不喷发出来系统就会自燃。" },
+            { pattern: /202[89]|2030|性别|身份|我是谁/, t: "2029.2Y", i: 145, l: 50, p: "快溢出来了 (88.2%)", sci: "身份属性与生物基础脱钩。", con: "肉体特征标签彻底失效，人只剩下频率的区别。" },
+            { pattern: /203[1-5]|中国|国内|重心|搬家/, t: "2031.4Y", i: 110, l: 45, p: "大半瓶了 (75.4%)", sci: "文明重心物理性位移加速期。", con: "重心已经在搬家了，2031年前是最后旧节奏。" },
+            { pattern: /203[6-9]|2040|语言|书|真理|专家/, t: "2038.2Y", i: 160, l: 65, p: "已经溢出 (78.5%)", sci: "认知模型遭受高维干涉扇击。", con: "现在的书和话全是废纸垃圾。专家说的真理会被一巴掌扇碎。" },
+            { pattern: /204[1-9]|2050|权力|归零/, t: "2050.0Y", i: 40, l: 15, p: "旧瓶已碎 (100%)", sci: "制度合法性坍缩，能量耗尽。", con: "权力像断电一样彻底熄火。2050年后规矩没人接茬。" }
         ];
 
-        // 3. 执行宣告：年份与关键词双路识别
+        // 倒计时核心：为特定卡片启动时钟
+        function startCardTimer(element) {
+            const target = new Date('2027-10-20T00:00:00').getTime();
+            function update() {
+                const now = new Date().getTime();
+                const diff = target - now;
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+                element.innerText = `⏳ 距离 2027.8Y 爆发还剩: ${d}D ${h}H ${m}M ${s}S`;
+                if (diff > 0) requestAnimationFrame(update);
+            }
+            update();
+        }
+
         function calc(input) {
             let res = RULES.find(r => r.pattern.test(input));
-            
-            // 年份自动识别逻辑 (2026-2050)
             if (!res) {
                 const yearMatch = input.match(/\d{4}/);
                 if (yearMatch) {
                     const y = parseInt(yearMatch[0]);
-                    if (y >= 2026 && y <= 2050) {
-                        res = RULES.find(r => r.pattern.test(y.toString()));
-                    }
+                    if (y >= 2026 && y <= 2050) res = RULES.find(r => r.pattern.test(y.toString()));
                 }
             }
+            if (!res) res = { t: "---", p: "重排中", i: 110, l: 45, sci: "全域因果重排中。", con: "输入 2026-2050 之间的年份获取定论。" };
 
-            if (!res) res = { t: "---", p: "重排中", i: 80, l: 30, sci: "全域因果重排中，频率不匹配。", con: "旧逻辑无法解析。请输入具体年份或节律变量。" };
-
-            // 波形反馈
             State.hz = res.i; State.lambda = res.l;
-
-            // UI 渲染
+            
             const card = document.createElement('div');
             card.className = 'card';
+            // 创建卡片结构，预留倒计时容器
             card.innerHTML = `
-                <div style="color:var(--g); font-size:12px; font-weight:bold; margin-bottom:12px;">执行宣告：${input}</div>
+                <div style="color:var(--g); font-weight:bold;">宣告：${input}</div>
                 <div class="m-grid">
-                    <div class="m-box">${res.t}</div>
-                    <div class="m-box">${res.p}</div>
+                    <div class="m-box"><div class="m-val">${res.t}</div></div>
+                    <div class="m-box"><div class="m-val">${res.p}</div></div>
                 </div>
                 <div class="section sci">${res.sci}</div>
                 <div class="section con">${res.con}</div>
+                <div class="card-timer">CALCULATING TIMELINE...</div>
             `;
+            
             log.insertBefore(card, log.firstChild);
+            
+            // 在卡片输出的那一刻，激活内部的倒计时
+            const timerElement = card.querySelector('.card-timer');
+            startCardTimer(timerElement);
         }
 
-        // 4. 视觉渲染引擎
         function render() {
             canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
             ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -164,7 +144,6 @@
         }
 
         cmd.onkeydown = (e) => { if (e.key === 'Enter' && cmd.value) { calc(cmd.value); cmd.value = ''; } };
-        window.onresize = render;
         render();
     </script>
 </body>
