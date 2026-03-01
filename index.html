@@ -9,12 +9,16 @@
         * { box-sizing: border-box; }
         body { background: var(--b); color: var(--n); font-family: "PingFang SC", "Microsoft YaHei", monospace; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        #s { width: 450px; border-right: 1px solid var(--dim); display: flex; flex-direction: column; background: #000; z-index: 10; flex-shrink: 0; position: relative; }
+        /* 初始化遮罩 */
+        #overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        #overlay.fade { opacity: 0; pointer-events: none; transition: 1s; }
+
+        #s { width: 450px; border-right: 1px solid var(--dim); display: flex; flex-direction: column; background: #000; z-index: 10; flex-shrink: 0; }
         .status-bar { padding: 25px; background: rgba(0,0,0,0.9); border-bottom: 1px solid var(--dim); backdrop-filter: blur(10px); }
         #log { flex: 1; overflow-y: auto; padding: 25px; scrollbar-width: none; }
         #log::-webkit-scrollbar { display: none; }
         #cmd-box { padding: 25px; border-top: 1px solid var(--dim); background: #000; }
-        #cmd { background: #0a0a0a; border: 2px solid var(--n); color: var(--w); width: 100%; padding: 15px; outline: none; font-size: 16px; transition: border 0.3s; }
+        #cmd { background: #0a0a0a; border: 2px solid var(--n); color: var(--w); width: 100%; padding: 15px; outline: none; font-size: 16px; }
 
         #stage { flex: 1; position: relative; background: #000; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
@@ -27,37 +31,33 @@
         .section { margin-top: 10px; padding: 10px; line-height: 1.6; }
         .sci { color: #888; font-style: italic; background: rgba(0,255,204,0.03); }
         .con { color: var(--w); background: rgba(255,204,0,0.1); border: 1px solid var(--g); }
-        
-        /* 关联频率样式 */
         .trace { margin-top: 12px; padding: 8px; background: rgba(255, 204, 0, 0.05); border: 1px dashed var(--g); color: var(--g); font-size: 12px; }
         .trace-tag { font-weight: bold; background: var(--g); color: #000; padding: 1px 4px; margin-right: 5px; }
-
         .card-timer { margin-top: 15px; font-family: monospace; color: var(--g); font-size: 11px; letter-spacing: 1px; border-top: 1px ridge var(--dim); padding-top: 10px; }
 
-        /* 左下角指南浮窗 - 强化版 */
         #guide-wrap { position: fixed; left: 20px; bottom: 20px; z-index: 999; }
-        #guide-btn { width: 45px; height: 45px; background: #000; border: 1px solid var(--n); color: var(--n); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; font-size: 20px; transition: 0.3s; }
-        #guide-btn:hover { background: var(--n); color: #000; box-shadow: 0 0 15px var(--n); }
-        
-        #guide-content { 
-            position: absolute; bottom: 55px; left: 0; width: 320px; max-height: 75vh;
-            background: rgba(0,0,0,0.95); border: 1px solid var(--dim); border-left: 4px solid var(--g);
-            padding: 20px; color: var(--w); font-size: 13px; line-height: 1.6;
-            overflow-y: auto; display: none; backdrop-filter: blur(10px);
-        }
+        #guide-btn { width: 45px; height: 45px; background: #000; border: 1px solid var(--n); color: var(--n); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; font-size: 20px; }
+        #guide-content { position: absolute; bottom: 55px; left: 0; width: 320px; max-height: 75vh; background: rgba(0,0,0,0.95); border: 1px solid var(--dim); border-left: 4px solid var(--g); padding: 20px; color: var(--w); font-size: 13px; line-height: 1.6; overflow-y: auto; display: none; backdrop-filter: blur(10px); }
         #guide-content.active { display: block; }
         .g-tit { color: var(--g); font-weight: bold; margin: 12px 0 5px 0; border-bottom: 1px solid #333; }
         .g-item { color: #aaa; margin-bottom: 8px; font-size: 12px; }
 
-        @media (max-width: 850px) { body { flex-direction: column; } #stage { height: 30vh; order: 1; flex: none; } #s { width: 100%; height: 70vh; order: 2; } #guide-wrap { bottom: 90px; left: 15px; } }
+        @media (max-width: 850px) { body { flex-direction: column; } #stage { height: 30vh; order: 1; flex: none; } #s { width: 100%; height: 70vh; order: 2; } }
     </style>
 </head>
 <body>
+    <div id="overlay" onclick="initSonic()">
+        <div style="text-align:center;">
+            <div style="font-size: 24px; font-weight: 900; color: var(--n); margin-bottom: 10px;">RHYTHM SYSTEM</div>
+            <div style="font-size: 12px; letter-spacing: 3px; color: var(--w); opacity: 0.6;">点击以初始化音场共振</div>
+        </div>
+    </div>
+
     <div id="stage"><canvas id="c"></canvas></div>
     <div id="s">
         <div class="status-bar">
             <div style="font-size: 24px; font-weight: 900; color: var(--w);">Rhythm System</div>
-            <div style="font-size:10px; color:var(--g); opacity:0.8; letter-spacing: 2px;">V31.5 // WEI JUERAN // FULL CAUSALITY</div>
+            <div id="sonic-stat" style="font-size:10px; color:var(--g); opacity:0.8; letter-spacing: 2px;">V32.0 // SONIC RHYTHM // AUDIO ON</div>
         </div>
         <div id="log"></div>
         <div id="cmd-box"><input id="cmd" placeholder="输入变量、年份执行宣告..." autofocus autocomplete="off"></div>
@@ -67,9 +67,9 @@
         <div id="guide-content">
             <div style="font-size: 16px; font-weight: bold; color: var(--n); margin-bottom: 10px;">因果宣告指南</div>
             <div class="g-tit">1. 秩序坍缩 (2027Y)</div>
-            <div class="g-item">“世界会开战吗？” / “目前的稳定性？”</div>
+            <div class="g-item">“目前稳定性？” / “战争？”</div>
             <div class="g-tit">2. 重心位移 (2031Y)</div>
-            <div class="g-item">“文明中心迁移？” / “未来节律？”</div>
+            <div class="g-item">“文明重心迁移？” / “未来节律？”</div>
             <div class="g-tit">3. 个体重塑 (2028Y)</div>
             <div class="g-item">“婚姻的终点？” / “性别定义？”</div>
             <div class="g-tit">4. 认知覆灭 (2038Y)</div>
@@ -85,8 +85,44 @@
         const cmd = document.getElementById('cmd'), log = document.getElementById('log');
         let State = { hz: 60, lambda: 20, t: 0 };
         let Visual = { color: '#00ffcc', shadow: '#00ffcc', glitch: 0 };
+        
+        // 音频上下文
+        let audioCtx, oscillator, lfo, gainNode;
 
-        // 完整同步截图规则 + 因果链
+        function initSonic() {
+            document.getElementById('overlay').classList.add('fade');
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            oscillator = audioCtx.createOscillator();
+            gainNode = audioCtx.createGain();
+            lfo = audioCtx.createOscillator();
+            const lfoGain = audioCtx.createGain();
+
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(60, audioCtx.currentTime); // 极低频基准
+
+            lfo.type = 'square';
+            lfo.frequency.setValueAtTime(2, audioCtx.currentTime); // 初始脉冲速度
+            
+            lfoGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            lfo.connect(lfoGain);
+            lfoGain.connect(gainNode.gain);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            oscillator.start();
+            lfo.start();
+        }
+
+        function updateSonic(hz) {
+            if (!audioCtx) return;
+            const pulseRate = Math.min(20, (hz / 10)); // 压强越大，脉冲越快
+            const baseFreq = Math.max(40, 100 - (hz / 2)); // 压强越大，声音越低沉（压迫感）
+            lfo.frequency.setTargetAtTime(pulseRate, audioCtx.currentTime, 0.5);
+            oscillator.frequency.setTargetAtTime(baseFreq, audioCtx.currentTime, 0.5);
+        }
+
        const RULES = [
             { pattern: /202[6-7]|战争|开战|打仗|导弹|蘑菇|冲突|暴力|热战/, t: "2027.3Y", i: 195, l: 85, p: "就剩个缝 (95.6%)", sci: "旧秩序压强达到物理临界值。", con: "2027年前后，旧能量不喷发出来系统就会自燃。", trace: "触发 2039 权力坍缩的早期震颤。" },
             { pattern: /稳定|和平|平衡|现状|安全/, t: "2027.8Y", i: 180, l: 70, p: "到嗓子眼了 (91.2%)", sci: "压强积蓄已达上限。", con: "所谓的‘稳定’只是爆发前的死寂。", trace: "波动指向 2031 文明重心的物理位移。" },
@@ -102,17 +138,12 @@
             { pattern: /2050|归零|终点|以后|未来世界/, t: "2050.0Y", i: 200, l: 20, p: "旧瓶已碎 (100%)", sci: "旧秩序彻底碎裂，进入高维共振稳态。", con: "2050年因果归零，进入纯粹频率时代。", trace: "因果链条闭环，所有震颤重归寂静。" }
         ];
 
-        function getYDate(yStr) {
-            const year = parseInt(yStr), decimal = parseFloat(yStr) - year;
-            return new Date(year, Math.floor(decimal * 12), 1).getTime();
-        }
-
         function startTimer(el, targetTime, label) {
             function update() {
                 const diff = targetTime - new Date().getTime();
-                if (diff <= 0) { el.innerText = `⌛ ${label} 节点已激活`; return; }
+                if (diff <= 0) { el.innerText = `⌛ ${label} 已激活`; return; }
                 const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
-                el.innerText = `⏳ 距离爆发还剩: ${d}D ${h}H ${m}M ${s}S`;
+                el.innerText = `⏳ 爆发剩余: ${d}D ${h}H ${m}M ${s}S`;
                 requestAnimationFrame(update);
             }
             update();
@@ -129,16 +160,16 @@
                     res = RULES.slice().sort((a,b) => Math.abs(parseFloat(a.t)-y)-Math.abs(parseFloat(b.t)-y))[0];
                 }
             }
-            if (!res) res = { t: "2031.4Y", p: "重排中", i: 110, l: 45, sci: "全域因果重排中。", con: "请宣告有效年份或关键字。", trace: "等待因果连锁激活。" };
+            if (!res) res = { t: "2031.4Y", p: "重排中", i: 110, l: 45, sci: "全域因果重排中。", con: "未捕获频率。", trace: "..." };
 
             const targetY = parseFloat(res.t);
             if (targetY < 2028) { Visual.color = "#ff3300"; Visual.shadow = "#ff3300"; }
             else if (targetY >= 2045) { Visual.color = "#ffffff"; Visual.shadow = "#ffffff"; }
-            else if (targetY >= 2037) { Visual.color = "#ffcc00"; Visual.shadow = "#ffcc00"; }
             else { Visual.color = "#00ffcc"; Visual.shadow = "#00ffcc"; }
             
             Visual.glitch = 10;
             State.hz = res.i; State.lambda = res.l;
+            updateSonic(res.i); // 音场同步
 
             const card = document.createElement('div');
             card.className = 'card';
@@ -149,7 +180,8 @@
                 <div class="trace"><span class="trace-tag">关联频率</span>${res.trace}</div>
                 <div class="card-timer">CALCULATING...</div>`;
             log.insertBefore(card, log.firstChild);
-            startTimer(card.querySelector('.card-timer'), getYDate(res.t), res.t);
+            const ts = new Date(parseInt(res.t), Math.floor((parseFloat(res.t)%1)*12), 1).getTime();
+            startTimer(card.querySelector('.card-timer'), ts, res.t);
         }
 
         function render() {
@@ -159,16 +191,11 @@
             if(Visual.glitch > 0) Visual.glitch--;
             ctx.strokeStyle = Visual.color; ctx.lineWidth = 2; ctx.shadowBlur = 15; ctx.shadowColor = Visual.shadow;
             ctx.beginPath();
-            const midY = canvas.height / 2;
             for (let x = 0; x <= canvas.width; x += 5) {
-                const y = midY + Math.sin(x*0.005 + State.t) * State.hz + Math.cos(x*0.01 + State.t) * State.lambda;
+                const y = (canvas.height/2) + Math.sin(x*0.005 + State.t) * State.hz + Math.cos(x*0.01 + State.t) * State.lambda;
                 x === 0 ? ctx.moveTo(x + g, y) : ctx.lineTo(x + g, y);
             }
             ctx.stroke();
-            if (Visual.color === "#ffffff") {
-                ctx.fillStyle = "rgba(255,255,255,0.2)";
-                for(let i=0; i<5; i++) ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1, 1);
-            }
             State.t += 0.05; requestAnimationFrame(render);
         }
 
