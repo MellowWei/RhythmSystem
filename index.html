@@ -6,96 +6,83 @@
     <title>Rhythm System</title>
     <style>
         :root { --n: #00ffcc; --g: #ffcc00; --b: #050505; --w: #ffffff; --dim: #1a1a1a; }
-        * { box-sizing: border-box; }
-        
-        body { 
-            background: var(--b); color: var(--n); 
-            font-family: "PingFang SC", monospace; margin: 0; 
-            display: flex; height: 100vh; overflow: hidden; 
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--b); color: var(--n); font-family: "PingFang SC", monospace; margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
-        /* PC端布局：左右分布 */
-        #s { 
-            width: 500px; border-right: 1px solid var(--dim); 
-            display: flex; flex-direction: column; background: #000; 
-            z-index: 10; flex-shrink: 0; position: relative;
-        }
-
-        .status-bar { 
-            padding: 25px; background: rgba(0,0,0,0.9); 
-            border-bottom: 1px solid var(--dim); backdrop-filter: blur(10px); 
-        }
-
-        #log { flex: 1; overflow-y: auto; padding: 25px; scrollbar-width: none; }
+        /* 布局逻辑 */
+        #s { width: 450px; max-width: 100%; border-right: 1px solid var(--dim); display: flex; flex-direction: column; background: #000; z-index: 10; flex-shrink: 0; }
+        .status-bar { padding: 20px; background: rgba(0,0,0,0.9); border-bottom: 1px solid var(--dim); backdrop-filter: blur(10px); }
+        #log { flex: 1; overflow-y: auto; padding: 20px; scrollbar-width: none; }
         #log::-webkit-scrollbar { display: none; }
+        #cmd-box { padding: 20px; border-top: 1px solid var(--dim); background: #000; }
+        #cmd { background: #0a0a0a; border: 2px solid var(--n); color: var(--w); width: 100%; padding: 12px; outline: none; font-size: 16px; }
 
-        #cmd-box { padding: 25px; border-top: 1px solid var(--dim); background: #000; }
-        #cmd { background: #0a0a0a; border: 2px solid var(--n); color: var(--w); width: 100%; padding: 15px; outline: none; font-size: 16px; }
+        /* 倒计时样式 */
+        #timer { font-size: 11px; color: var(--g); margin-top: 5px; font-family: monospace; letter-spacing: 1px; }
 
-        #stage { flex: 1; position: relative; background: #000; overflow: hidden; }
+        /* 画布与卡片 */
+        #stage { flex: 1; position: relative; background: #000; }
         canvas { width: 100%; height: 100%; display: block; }
+        .card { border: 1px solid var(--dim); background: #080808; padding: 15px; margin-bottom: 15px; border-left: 3px solid var(--n); }
+        .m-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+        .m-box { background: #0c0c0c; padding: 12px; border: 1px solid #222; text-align: center; color: var(--w); font-weight: bold; font-size: 14px; }
+        .section { margin-top: 8px; padding: 10px; font-size: 13px; line-height: 1.5; }
+        .sci { color: #777; font-style: italic; background: rgba(0,255,204,0.03); }
+        .con { color: var(--w); background: rgba(255,204,0,0.05); border: 1px solid rgba(255,204,0,0.3); }
 
-        /* 卡片样式适配 */
-        .card { border: 1px solid var(--dim); background: #080808; padding: 20px; margin-bottom: 20px; border-left: 3px solid var(--n); font-size: 14px; }
-        .m-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 15px 0; }
-        .m-box { background: #0c0c0c; padding: 10px; border: 1px solid #222; text-align: center;}
-        .m-val { font-size: 16px; color: var(--w); font-weight: bold; }
-        .section { margin-top: 10px; padding: 10px; line-height: 1.6; }
-        .sci { color: #888; font-style: italic; background: rgba(0,255,204,0.03); }
-        .con { color: var(--w); background: rgba(255,204,0,0.1); border: 1px solid var(--g); }
-
-        /* --- 深度自适应：移动端重力偏转 --- */
         @media (max-width: 850px) {
-            body { flex-direction: column; } /* 关键：改为纵向堆叠 */
-            
-            #stage { height: 35vh; order: 1; flex: none; } /* 视觉波形在上方 */
-            
-            #s { 
-                width: 100%; height: 65vh; /* 指令/日志区在下方 */
-                border-right: none; border-top: 1px solid var(--dim);
-                order: 2; 
-            }
-            
-            .status-bar { padding: 15px; }
-            .res-display { font-size: 20px !important; }
-            #cmd-box { padding: 15px; }
+            body { flex-direction: column; }
+            #stage { height: 30vh; order: 1; flex: none; }
+            #s { width: 100%; height: 70vh; border-right: none; border-top: 1px solid var(--dim); order: 2; }
         }
     </style>
 </head>
 <body>
     <div id="stage"><canvas id="c"></canvas></div>
-
     <div id="s">
         <div class="status-bar">
-            <div class="res-display" style="font-size: 28px; font-weight: 900; color: var(--w);">Rhythm System</div>
-            <div style="font-size:10px; color:var(--g); opacity:0.8;">V26.7 // 深度自适应校准</div>
+            <div style="font-size: 24px; font-weight: 900; color: var(--w);">Rhythm System</div>
+            <div id="timer">COUNTDOWN TO 2027.8Y: LOADING...</div>
         </div>
         <div id="log"></div>
-        <div id="cmd-box"><input id="cmd" placeholder="输入变量，执行因果宣告..." autofocus autocomplete="off"></div>
+        <div id="cmd-box"><input id="cmd" placeholder="输入年份 (2026-2050) 或 变量..." autofocus autocomplete="off"></div>
     </div>
-
-    <div id="help-btn" style="position:fixed; bottom:20px; right:20px; width:45px; height:45px; background:var(--n); color:#000; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:bold; z-index:100;">?</div>
 
     <script>
         const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
-        const cmd = document.getElementById('cmd'), log = document.getElementById('log');
+        const cmd = document.getElementById('cmd'), log = document.getElementById('log'), timer = document.getElementById('timer');
         let State = { hz: 60, lambda: 20, t: 0 };
 
-        // 核心规则库
+        // 倒计时逻辑：目标 2027年10月20日 (2027.8Y)
+        function updateTimer() {
+            const target = new Date('2027-10-20T00:00:00').getTime();
+            const now = new Date().getTime();
+            const diff = target - now;
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            timer.innerText = `距离 2027.8Y 爆发点: ${d}D ${h}H ${m}M ${s}S`;
+        }
+        setInterval(updateTimer, 1000);
+
+        // 因果规则库
         const RULES = [
-            { pattern: /战争|开战|冲突|热战/, t: "2027.3Y", i: 180, l: 70, p: "就剩个缝 (95.6%)", sci: "旧秩序压强达到物理临界值。", con: "和平的缝隙已经看不见了。能量必须通过动能形式释放。" },
-            { pattern: /稳定|和平|现状/, t: "2027.8Y", i: 180, l: 70, p: "到嗓子眼了 (91.2%)", sci: "稳定态正处于坍缩前夕的极低熵假象。", con: "所谓的稳定只是爆发前的死寂。" },
-            { pattern: /美国|大选/, t: "2027.8Y", i: 145, l: 58, p: "到嗓子眼了 (91.2%)", sci: "信用本位与武力投影相位偏移。", con: "信用装不下了，武力往外溢，嗓子眼已经堵死。" },
-            { pattern: /中国|国内|东方/, t: "2031.4Y", i: 110, l: 45, p: "大半瓶了 (75.4%)", sci: "文明重心物理性位移进入加速期。", con: "重心已经在搬家了，2031年是最后的旧节奏。" },
-            { pattern: /性别|身份|男|女/, t: "2029.2Y", i: 85, l: 42, p: "快溢出来了 (88.2%)", sci: "身份属性与生物基础脱钩。", con: "肉体特征标签彻底失效，人只剩下频率的区别。" }
+            { pattern: /202[67]|战争|稳定|安全/, t: "2027.8Y", i: 180, l: 70, p: "到嗓子眼了 (91.2%)", sci: "旧秩序压强达到物理临界值。", con: "所谓的‘稳定’只是火山爆发前的死寂。" },
+            { pattern: /202[89]|2030|性别|身份/, t: "2029.2Y", i: 145, l: 50, p: "快溢出来了 (88.2%)", sci: "身份属性与生物基础脱钩。", con: "肉体特征标签在2029年后彻底失效。别再贴标签。" },
+            { pattern: /203[1-5]|中国|重心|东方/, t: "2031.4Y", i: 110, l: 45, p: "大半瓶了 (75.4%)", sci: "文明重心的物理性位移进入加速期。", con: "重心已经在搬家了。2031年前是最后旧节奏。" },
+            { pattern: /203[6-9]|2040|语言|书|真理/, t: "2038.2Y", i: 160, l: 65, p: "已经溢出 (78.5%)", sci: "认知模型遭受高维干涉扇击。", con: "现在的书和话全是废纸垃圾。专家说的真理会被一巴掌扇碎。" },
+            { pattern: /204[1-9]|2050|权力|归零/, t: "2050.0Y", i: 40, l: 15, p: "旧瓶已碎 (100%)", sci: "现行制度的合法性基石坍缩。", con: "权力像断电一样彻底熄火。2050年后规矩没人接茬。" }
         ];
 
         function calc(input) {
-            let res = RULES.find(r => r.pattern.test(input)) || { t: "2031.4Y", p: "重排中", i: 110, l: 45, sci: "全域因果重排中。", con: "重心正在搬家。旧逻辑无法解析。" };
+            let res = RULES.find(r => r.pattern.test(input)) || { t: "---", p: "重排中", i: 80, l: 30, sci: "全域因果重排中。", con: "旧逻辑无法解析，输入 2026-2050 之间的年份获取定论。" };
             State.hz = res.i; State.lambda = res.l;
             const card = document.createElement('div');
             card.className = 'card';
-            card.innerHTML = `<div style="color:var(--g); font-weight:bold;">宣告：${input}</div><div class="m-grid"><div class="m-box"><div class="m-val">${res.t}</div></div><div class="m-box"><div class="m-val">${res.p}</div></div></div><div class="section sci">${res.sci}</div><div class="section con">${res.con}</div>`;
+            card.innerHTML = `<div style="color:var(--g); font-size:12px; margin-bottom:10px;">执行宣告：${input}</div>
+                <div class="m-grid"><div class="m-box">${res.t}</div><div class="m-box">${res.p}</div></div>
+                <div class="section sci">${res.sci}</div><div class="section con">${res.con}</div>`;
             log.insertBefore(card, log.firstChild);
         }
 
